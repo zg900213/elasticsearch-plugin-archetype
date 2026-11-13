@@ -1,0 +1,4 @@
+${artifactId}
+Copyright 2026 ${groupId}
+
+This product includes software developed by the Elasticsearch plugin archetype.

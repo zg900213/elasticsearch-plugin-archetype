@@ -7,8 +7,14 @@
 	</formats>
 	<includeBaseDirectory>false</includeBaseDirectory>
 	<files>
+		<!--
+		The descriptor lives in a .tmpl file because the Gradle build
+		(elasticsearch.esplugin) generates its own plugin-descriptor.properties.
+		Maven renames it to plugin-descriptor.properties when assembling the zip.
+		-->
 		<file>
-			<source>${dollar}{basedir}/src/main/plugin-metadata/plugin-descriptor.properties</source>
+			<source>${dollar}{basedir}/src/main/plugin-metadata/plugin-descriptor.properties.tmpl</source>
+			<destName>plugin-descriptor.properties</destName>
 			<filtered>true</filtered>
 		</file>
 		<!--

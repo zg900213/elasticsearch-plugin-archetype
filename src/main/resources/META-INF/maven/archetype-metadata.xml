@@ -9,16 +9,25 @@
       <defaultValue>Hello</defaultValue>
     </requiredProperty>
     <!--
-      NEW: selects the Elasticsearch plugin interface to implement.
+      Selects the Elasticsearch plugin interface to implement.
       Built-in aliases: rest (default), action, analysis, ingest, mapper,
       script, search, repository, discovery, engine, indexstore, systemindex,
       circuitbreaker, cluster, network, persistent, reloadable, extensible,
       basic. Any fully qualified interface name (containing a dot) is also
-      accepted, e.g. org.elasticsearch.plugins.AnalysisPlugin or
-      com.example.spi.MyPluginInterface. See README.md for the full list.
+      accepted. See README.md for the full list.
     -->
     <requiredProperty key="pluginType">
       <defaultValue>rest</defaultValue>
+    </requiredProperty>
+    <!--
+      NEW: which build tooling the generated project ships with.
+      maven = pom.xml + assembly (classic Maven archetype output)
+      gradle = build.gradle using elasticsearch.esplugin + elasticsearch.testclusters
+      both (default) = generated project can be built with either tool
+      META-INF/archetype-post-generate.groovy removes the unused files.
+    -->
+    <requiredProperty key="buildTool">
+      <defaultValue>both</defaultValue>
     </requiredProperty>
     <requiredProperty key="elasticsearchVersion">
       <defaultValue>7.10.2</defaultValue>
@@ -28,11 +37,31 @@
     </requiredProperty>
   </requiredProperties>
   <fileSets>
-    <!-- Root-level files (generated project README) need an explicit fileSet -->
+    <!-- Root-level text files need an explicit fileSet (pom.xml is handled by the archetype plugin itself) -->
     <fileSet filtered="true" encoding="UTF-8">
       <directory></directory>
       <includes>
         <include>README.md</include>
+        <include>build.gradle</include>
+        <include>settings.gradle</include>
+        <include>gradle.properties</include>
+        <include>LICENSE.txt</include>
+        <include>NOTICE.txt</include>
+      </includes>
+    </fileSet>
+    <!-- Wrapper scripts contain shell $ variables: never run Velocity on them -->
+    <fileSet filtered="false" encoding="UTF-8">
+      <directory></directory>
+      <includes>
+        <include>gradlew</include>
+        <include>gradlew.bat</include>
+      </includes>
+    </fileSet>
+    <!-- Binary jar + properties: copy verbatim -->
+    <fileSet filtered="false" encoding="UTF-8">
+      <directory>gradle/wrapper</directory>
+      <includes>
+        <include>**/*</include>
       </includes>
     </fileSet>
     <fileSet filtered="true" packaged="true" encoding="UTF-8">
@@ -47,14 +76,23 @@
         <include>**/*.xml</include>
       </includes>
     </fileSet>
+    <!-- Maven descriptor template; esplugin generates its own descriptor, so keep a
+         separate .tmpl file to avoid two plugin-descriptor.properties in the zip -->
     <fileSet filtered="true" encoding="UTF-8">
       <directory>src/main/plugin-metadata</directory>
       <includes>
-        <include>**/*.properties</include>
+        <include>**/*.tmpl</include>
       </includes>
     </fileSet>
     <fileSet filtered="true" packaged="true" encoding="UTF-8">
       <directory>src/test/java</directory>
+      <includes>
+        <include>**/*.java</include>
+      </includes>
+    </fileSet>
+    <!-- Java REST tests executed by elasticsearch.testclusters -->
+    <fileSet filtered="true" packaged="true" encoding="UTF-8">
+      <directory>src/javaRestTest/java</directory>
       <includes>
         <include>**/*.java</include>
       </includes>
