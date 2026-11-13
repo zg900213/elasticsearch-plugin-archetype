@@ -26,7 +26,7 @@ Fork 自 [codelibs/elasticsearch-plugin-archetype](https://github.com/codelibs/e
 
 ## 环境要求
 
-- JDK：Maven 编译/测试用 JDK 8+ 即可（实测 JDK 1.8.0_101 可编译并运行单节点 ES 7.10.2 集成测试）；**Gradle 路线建议 JDK 11+**（实测 corretto-11.0.22），生产集群建议 JDK 11+ 或 ES 自带 JDK 15。生成工程 pom 默认 `maven.compiler.source/target=1.8`。
+- JDK：Maven 编译/测试用 JDK 8+ 即可；`./gradlew bundlePlugin` 用 JDK 11+（实测 corretto-11.0.22）；**`./gradlew javaRestTest` 必须 JDK 14+** —— build-tools 的 reaper 辅助进程是 Java 14 字节码（class 58.0），testclusters 用 Gradle 同一个 JVM 启动它，JDK 11 会报 `UnsupportedClassVersionError` / "Reaper process died unexpectedly"。ES 7.10.2 发行版自带 JDK 15，可直接用它。生产集群建议 JDK 11+。生成工程 pom 默认 `maven.compiler.source/target=1.8`。
 - Maven 3.3+（archetype 本身固定 `maven-archetype-plugin 3.2.1`）。
 - Gradle 6.6.1（**wrapper 已内置到生成工程**，首次运行自动下载发行版）。
 
@@ -127,6 +127,7 @@ testClusters.all { testDistribution = 'DEFAULT' }
 - 三个仓库缺一不可：`shadow 6.0.0` 在 Gradle Plugin Portal，`nebula-core 3.0.0`、`gradle-docker-compose-plugin 0.12.1` 只在 JCenter 镜像（JCenter 已关闭），所以模板额外配了一个公共镜像，可自行替换。
 - `BuildPlugin` 要求 `licenseFile` / `noticeFile`，模板已生成 `LICENSE.txt` / `NOTICE.txt`；`testClusters.all` 不要写 `numberOfNodes = 1`（集群默认已有 1 节点，会被判定为"shrink"而报错）。
 - `elasticsearch.java-rest-test` 会创建 `javaRestTest` sourceSet/`RestIntegTestTask`，并自动把 `bundlePlugin` 的 zip 装进 testclusters 集群；测试类在 `src/javaRestTest/java/.../${pluginName}RestIT.java`（继承 `ESRestTestCase`）。
+- 独立工程里 `org.elasticsearch.test:framework:7.10.2` 不会把 `log4j-core` 带到 javaRestTest 的 runtime classpath，`ESRestTestCase` 初始化会抛 `NoClassDefFoundError: org/apache/logging/log4j/core/Layout`；模板已显式加 `javaRestTestImplementation 'org.apache.logging.log4j:log4j-core:2.11.1'`。
 - 为避免两套构建各写一个 `plugin-descriptor.properties`，Maven 的描述符模板改名为 `plugin-descriptor.properties.tmpl`，由 assembly 的 `<destName>` 在打包时重命名；Gradle 的 `bundlePlugin` 用 `exclude '**/*.tmpl'` 排除它。
 
 ## pluginType：一个参数生成任意类型插件
@@ -187,7 +188,7 @@ testClusters.all { testDistribution = 'DEFAULT' }
 
 ## 已知限制
 
-- Gradle 路线需 JDK 11+ / Gradle 6.6.1；首次 `./gradlew javaRestTest` 会下载 ES 7.10.2 发行版（数百 MB），耗时取决于网络。`build-tools` 的 JCenter 历史依赖依赖模板中的公共镜像，离线环境需提前缓存。
+- Gradle 路线需 Gradle 6.6.1；`javaRestTest` 另需 JDK 14+（reaper 字节码限制，详见上文），首次还会下载 ES 7.10.2 发行版（数百 MB），耗时取决于网络。`build-tools` 的 JCenter 历史依赖依赖模板中的公共镜像，离线环境需提前缓存。Windows 上若 JAVA_HOME 指向 testclusters 目录内的 JDK，会因文件锁导致清理失败，应把 JDK 复制到独立目录。
 - `elasticsearchVersion` 传非 `7.10.2` 时：Maven 测试依赖 `<版本>.0` 需要有对应 cluster-runner；Gradle 的 `build-tools:<版本>` 也需要存在。
 - 自定义全限定接口需自行在生成工程补依赖（Maven 加 pom，Gradle 加 `dependencies { compileOnly ... }`）。
 - `META-INF/maven/archetype.xml` 是上游遗留的 1.x 描述符，仅为兼容保留；权威配置是 `archetype-metadata.xml`，请使用 archetype-plugin 3.2.1。

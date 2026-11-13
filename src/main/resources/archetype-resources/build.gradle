@@ -37,6 +37,13 @@ repositories {
     mavenCentral()
 }
 
+dependencies {
+    // ESRestTestCase (LuceneTestCase) needs log4j-core at runtime. In a
+    // standalone project the ES test framework does not put log4j-core on the
+    // javaRestTest runtime classpath, so javaRestTest fails to initialize.
+    javaRestTestImplementation 'org.apache.logging.log4j:log4j-core:2.11.1'
+}
+
 esplugin {
     name '${artifactId}'
     description '${pluginName} Plugin for Elasticsearch ${elasticsearchVersion}'

@@ -43,7 +43,7 @@ The zip is written to `target/releases/`. Install it with:
     ./gradlew javaRestTest        # testclusters boots a real ES ${elasticsearchVersion} node with this plugin installed
     ./gradlew run                 # start a node with the plugin in the foreground
 
-`build.gradle` pulls `org.elasticsearch.gradle:build-tools:${elasticsearchVersion}` from Maven Central + Gradle Plugin Portal + a JCenter mirror (legacy transitive deps). Use Gradle 6.6.1 (wrapper included) with JDK 11+. The first `javaRestTest` run downloads the Elasticsearch ${elasticsearchVersion} distribution.
+`build.gradle` pulls `org.elasticsearch.gradle:build-tools:${elasticsearchVersion}` from Maven Central + Gradle Plugin Portal + a JCenter mirror (legacy transitive deps). Use Gradle 6.6.1 (wrapper included). `bundlePlugin` works on JDK 11+, but **`javaRestTest` needs JDK 14+**: build-tools' reaper helper is compiled to Java 14 bytecode, and testclusters launches it with the Gradle JVM. The JDK bundled with the Elasticsearch ${elasticsearchVersion} distribution (JDK 15) works. The first `javaRestTest` run downloads that distribution.
 
 #end
 **Install**
@@ -64,4 +64,4 @@ Override the extension points of the interface selected by `pluginType`; the TOD
 #end
 **JDK notes**
 
-Sources target Java 8 bytecode (ES 7.10.2 compatible) and Maven tests run on JDK 8. Gradle builds and production clusters should use JDK 11+ (or the bundled JDK 15).
+Sources target Java 8 bytecode (ES 7.10.2 compatible) and Maven tests run on JDK 8. `./gradlew bundlePlugin` works with JDK 11+; `./gradlew javaRestTest` and production clusters need JDK 14+/11+ respectively (the ES distribution bundles JDK 15).
