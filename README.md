@@ -181,10 +181,22 @@ testClusters.all { testDistribution = 'DEFAULT' }
 - 生成 6 种 pluginType 工程并核对映射：`rest`→`ActionPlugin`、`analysis`→`AnalysisPlugin`、`IngestPlugin` 简写、FQCN、`basic`、未知别名，全部正确；6 个工程 `mvn test-compile` 通过。
 - `rest`：`mvn test` 通过（单节点 ES 7.10.2 启动、插件加载、REST 断言，1 test / 0 failure）；`basic`：`mvn test` 通过；`mvn -DskipTests package` 产出 zip，descriptor 属性（`classname` / `elasticsearch.version=7.10.2` / `java.version=1.8`）正确。
 - **独立 Gradle 工程实测**（`build-tools:7.10.2`）：`gradle tasks --all` 成功加载 `elasticsearch.esplugin`、`elasticsearch.testclusters`、`elasticsearch.java-rest-test`，可见 `bundlePlugin` / `javaRestTest` / `pluginProperties` 等任务；`gradle bundlePlugin` **BUILD SUCCESSFUL**，产出 zip 内含 esplugin 自动生成的 `plugin-descriptor.properties`（`elasticsearch.version=7.10.2`）、插件 jar、`LICENSE.txt`、`NOTICE.txt`。
-- **生成工程实测**（自带 wrapper，Gradle 6.6.1 + JDK 11）：`./gradlew bundlePlugin` 在 `buildTool=gradle`（analysis）与 `buildTool=both`（rest）下均 BUILD SUCCESSFUL；both 模式的 zip 只有一个 descriptor、无 `.tmpl` 泄漏；`./gradlew javaRestTestClasses` 编译通过（`ESRestTestCase` 依赖可用）。
+- **生成工程实测**（自带 wrapper，Gradle 6.6.1）：`./gradlew bundlePlugin` 在 `buildTool=gradle`（analysis）与 `buildTool=both`（rest）下均 BUILD SUCCESSFUL（JDK 11 即可）；both 模式 zip 只有一个 descriptor、无 `.tmpl` 泄漏。
 - Maven 侧：descriptor 模板改名 `.tmpl` 后，`mvn test-compile` 与 `mvn -DskipTests package` 仍通过，zip 内 `plugin-descriptor.properties` 属性正确（assembly `destName` 生效）。
 - 三个 buildTool 值（maven / gradle / both）均能生成且文件清理正确；wrapper jar 生成后与源文件 SHA-256 一致，gradlew 的 shell 变量未被 Velocity 破坏。
-- 未实际执行 `./gradlew javaRestTest` 启动集群（首次需下载 ES 7.10.2 发行版，数百 MB）；任务与测试类已验证存在且可编译。
+
+## 端到端实跑（完整流程，2026-11-13）
+
+按「clone → 安装 archetype → 生成 → 两种构建 → 两个 zip 装进真实节点」全跑一遍：
+
+1. 从远端干净 clone 后 `mvn clean install`，生成 `both/rest`、`gradle/rest`、`maven/analysis`、`both/basic` 四个工程。
+2. Maven：`mvn test` 通过（cluster-runner 启动单节点 ES 7.10.2，1 test / 0 failure）；`mvn -DskipTests package` 产出 `target/releases/*.zip`，descriptor 属性正确。
+3. Gradle：testclusters 下载 ES 7.10.2 官方发行版并启动真实集群；用 **JDK 15** 执行 `./gradlew javaRestTest` → **BUILD SUCCESSFUL，`HelloRestIT` 2 tests / 0 failures**（`testPluginIsLoaded` + `testPluginRestEndpoint`），集群自动安装了 `bundlePlugin` 产出的 zip。
+4. 真实节点：解压官方 `elasticsearch-7.10.2-windows-x86_64.zip`（291 MB），用 `bin/elasticsearch-plugin install -b file://...` 分别安装 Maven zip 与 Gradle zip，单节点启动后 curl 验证：
+   - `GET /` → `version.number = 7.10.2`；`GET /_cluster/health` → green；
+   - `GET /_cat/plugins` → `hello`（Maven zip）/ `es-e2e-fixed`（Gradle zip）；
+   - `GET /_hello` → `{"description":"This is a ... response: ..."}`；`GET /my_index/_hello` → 额外返回 `"index":"my_index"`。
+5. 实跑中发现并已修复两个真实问题：`javaRestTest` 缺 `log4j-core`（`NoClassDefFoundError: org/apache/logging/log4j/core/Layout`）→ 模板加 `javaRestTestImplementation`；JDK 11 跑 reaper 报 `UnsupportedClassVersionError`（class 58.0）→ 文档明确需 JDK 14+，实测 ES 自带 JDK 15 可用。
 
 ## 已知限制
 
