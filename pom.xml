@@ -1,64 +1,68 @@
-<?xml version="1.0"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
+
+  <!--
+    Fork of https://github.com/codelibs/elasticsearch-plugin-archetype
+    Reworked for Elasticsearch 7.10.2, with a new "pluginType" parameter that
+    generates any kind of Elasticsearch plugin (REST, analysis, ingest, ... or
+    an arbitrary fully qualified plugin interface).
+  -->
   <groupId>org.codelibs</groupId>
   <artifactId>elasticsearch-plugin-archetype</artifactId>
-  <version>6.6.1-SNAPSHOT</version>
-  <name>Archetype for elasticsearch plugin</name>
-  <description>This archetype generates your project for Elasticsearch plugin.</description>
-  <url>https://github.com/codelibs/elasticsearch-plugin-archetype</url>
+  <version>7.10.2</version>
+  <packaging>maven-archetype</packaging>
+
+  <name>Archetype for Elasticsearch 7.10.2 plugin</name>
+  <description>Maven archetype that generates Elasticsearch 7.10.2 plugin projects of any plugin type.</description>
+  <url>https://github.com/zg900213/elasticsearch-plugin-archetype</url>
   <inceptionYear>2012</inceptionYear>
+
   <licenses>
     <license>
       <name>The Apache Software License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
       <distribution>repo</distribution>
     </license>
   </licenses>
-  <organization>
-    <name>CodeLibs</name>
-    <url>http://www.codelibs.org/</url>
-  </organization>
+
   <scm>
-    <connection>scm:git:git@github.com:codelibs/elasticsearch-plugin-archetype.git</connection>
-    <developerConnection>scm:git:git@github.com:codelibs/elasticsearch-plugin-archetype.git</developerConnection>
-    <url>git@github.com:codelibs/elasticsearch-plugin-archetype.git</url>
+    <connection>scm:git:https://github.com/zg900213/elasticsearch-plugin-archetype.git</connection>
+    <developerConnection>scm:git:https://github.com/zg900213/elasticsearch-plugin-archetype.git</developerConnection>
+    <url>https://github.com/zg900213/elasticsearch-plugin-archetype</url>
   </scm>
-  <parent>
-    <groupId>org.sonatype.oss</groupId>
-    <artifactId>oss-parent</artifactId>
-    <version>9</version>
-  </parent>
-  <developers>
-    <developer>
-      <id>marevol</id>
-      <name>Shinsuke Sugaya</name>
-      <email>shinsuke(at)yahoo.co.jp</email>
-    </developer>
-  </developers>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <archetype.plugin.version>3.2.1</archetype.plugin.version>
+  </properties>
+
   <build>
-    <defaultGoal>validate</defaultGoal>
+    <defaultGoal>install</defaultGoal>
+    <extensions>
+      <extension>
+        <groupId>org.apache.maven.archetype</groupId>
+        <artifactId>archetype-packaging</artifactId>
+        <version>${archetype.plugin.version}</version>
+      </extension>
+    </extensions>
     <pluginManagement>
       <plugins>
         <plugin>
-          <artifactId>maven-deploy-plugin</artifactId>
-          <configuration>
-            <updateReleaseInfo>true</updateReleaseInfo>
-          </configuration>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-archetype-plugin</artifactId>
+          <version>${archetype.plugin.version}</version>
         </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-archetype-plugin</artifactId>
         <extensions>true</extensions>
       </plugin>
     </plugins>
-    <extensions>
-      <extension>
-        <groupId>org.apache.maven.archetype</groupId>
-        <artifactId>archetype-packaging</artifactId>
-      </extension>
-    </extensions>
   </build>
 </project>

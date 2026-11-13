@@ -1,15 +1,40 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<archetype-descriptor name="elasticsearch-plugin-archetype">
+<archetype-descriptor name="elasticsearch-plugin-archetype"
+  xmlns="http://maven.apache.org/plugins/maven-archetype-plugin/archetype-descriptor/1.1.0"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/plugins/maven-archetype-plugin/archetype-descriptor/1.1.0 https://maven.apache.org/xsd/archetype-descriptor-1.1.0.xsd">
   <requiredProperties>
-    <requiredProperty key="pluginName"/>
+    <!-- Java class name prefix, e.g. Hello -> HelloPlugin / RestHelloAction -->
+    <requiredProperty key="pluginName">
+      <defaultValue>Hello</defaultValue>
+    </requiredProperty>
+    <!--
+      NEW: selects the Elasticsearch plugin interface to implement.
+      Built-in aliases: rest (default), action, analysis, ingest, mapper,
+      script, search, repository, discovery, engine, indexstore, systemindex,
+      circuitbreaker, cluster, network, persistent, reloadable, extensible,
+      basic. Any fully qualified interface name (containing a dot) is also
+      accepted, e.g. org.elasticsearch.plugins.AnalysisPlugin or
+      com.example.spi.MyPluginInterface. See README.md for the full list.
+    -->
+    <requiredProperty key="pluginType">
+      <defaultValue>rest</defaultValue>
+    </requiredProperty>
     <requiredProperty key="elasticsearchVersion">
-      <defaultValue>6.6.1</defaultValue>
+      <defaultValue>7.10.2</defaultValue>
     </requiredProperty>
     <requiredProperty key="restName">
       <defaultValue>hello</defaultValue>
     </requiredProperty>
   </requiredProperties>
   <fileSets>
+    <!-- Root-level files (generated project README) need an explicit fileSet -->
+    <fileSet filtered="true" encoding="UTF-8">
+      <directory></directory>
+      <includes>
+        <include>README.md</include>
+      </includes>
+    </fileSet>
     <fileSet filtered="true" packaged="true" encoding="UTF-8">
       <directory>src/main/java</directory>
       <includes>
@@ -22,7 +47,7 @@
         <include>**/*.xml</include>
       </includes>
     </fileSet>
-    <fileSet filtered="true" encoding="ISO-8859-1">
+    <fileSet filtered="true" encoding="UTF-8">
       <directory>src/main/plugin-metadata</directory>
       <includes>
         <include>**/*.properties</include>

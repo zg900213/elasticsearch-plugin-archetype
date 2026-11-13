@@ -11,18 +11,21 @@
 			<source>${dollar}{basedir}/src/main/plugin-metadata/plugin-descriptor.properties</source>
 			<filtered>true</filtered>
 		</file>
-		<!-- 
+		<!--
+		Elasticsearch 7.10.2 plugins that need extra JVM permissions can add
+		src/main/plugin-metadata/plugin-security.policy and enable this file:
 		<file>
 			<source>${dollar}{basedir}/src/main/plugin-metadata/plugin-security.policy</source>
 			<filtered>false</filtered>
 		</file>
-		 -->
+		-->
 	</files>
 	<dependencySets>
 		<dependencySet>
 			<useProjectArtifact>true</useProjectArtifact>
 			<useTransitiveFiltering>true</useTransitiveFiltering>
 			<excludes>
+				<!-- Provided by Elasticsearch itself -->
 				<exclude>org.elasticsearch:elasticsearch</exclude>
 			</excludes>
 		</dependencySet>

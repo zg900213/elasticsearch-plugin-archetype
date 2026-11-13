@@ -1,33 +1,52 @@
 #set($dollar = '$')##
 #set($pluginPackageName = $pluginName.substring(0,1).toLowerCase() + $pluginName.substring(1))##
+#if(!$pluginType || $pluginType.trim() == "")##
+#set($pluginType = "rest")##
+#end
+#set($pt = $pluginType.trim().toLowerCase())##
+#if($pt == "rest")##
+#set($isRest = "true")##
+#else##
+#set($isRest = "false")##
+#end
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-	<name>${artifactId}</name>
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>${groupId}</groupId>
 	<artifactId>${artifactId}</artifactId>
 	<version>${version}</version>
 	<packaging>jar</packaging>
-	<description>elasticsearch ${pluginPackageName} plugin</description>
-	<inceptionYear>2019</inceptionYear>
+	<name>${artifactId}</name>
+	<description>Elasticsearch ${elasticsearchVersion} ${pluginType} plugin (${pluginPackageName})</description>
+
 	<licenses>
 		<license>
 			<name>The Apache Software License, Version 2.0</name>
-			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+			<url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
+
 	<properties>
+		<!-- Elasticsearch 7.10.2 is the baseline; override with -DelasticsearchVersion -->
 		<elasticsearch.version>${elasticsearchVersion}</elasticsearch.version>
 		<elasticsearch.plugin.classname>${package}.${pluginName}Plugin</elasticsearch.plugin.classname>
+		<!-- codelibs cluster runner uses <es version>.0 as its own version -->
+		<elasticsearch.cluster.runner.version>${elasticsearchVersion}.0</elasticsearch.cluster.runner.version>
+		<!-- Matches the log4j version bundled with Elasticsearch 7.10.2 -->
 		<log4j.version>2.11.1</log4j.version>
+		<!-- ES 7.10.2 and cluster-runner 7.10.2.0 are Java 8 bytecode compatible.
+		     Change both to 11 if you build/run against a JDK 11+ only cluster. -->
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
+
 	<build>
 		<plugins>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
 				<version>3.8.1</version>
 				<configuration>
@@ -37,6 +56,7 @@
 				</configuration>
 			</plugin>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>2.22.2</version>
 				<configuration>
@@ -46,8 +66,9 @@
 				</configuration>
 			</plugin>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-source-plugin</artifactId>
-				<version>3.0.1</version>
+				<version>3.2.1</version>
 				<executions>
 					<execution>
 						<id>attach-sources</id>
@@ -58,8 +79,9 @@
 				</executions>
 			</plugin>
 			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
-				<version>3.1.1</version>
+				<version>3.3.0</version>
 				<configuration>
 					<appendAssemblyId>false</appendAssemblyId>
 					<outputDirectory>${dollar}{project.build.directory}/releases/</outputDirectory>
@@ -78,6 +100,7 @@
 			</plugin>
 		</plugins>
 	</build>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.elasticsearch</groupId>
@@ -91,16 +114,19 @@
 			<version>${dollar}{log4j.version}</version>
 			<scope>provided</scope>
 		</dependency>
+#if($isRest == "true")
+		<!-- Integration test runner for the generated REST endpoint -->
 		<dependency>
-			<groupId>${groupId}</groupId>
+			<groupId>org.codelibs</groupId>
 			<artifactId>elasticsearch-cluster-runner</artifactId>
-			<version>${dollar}{elasticsearch.version}.0</version>
+			<version>${dollar}{elasticsearch.cluster.runner.version}</version>
 			<scope>test</scope>
 		</dependency>
+#end
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<version>4.12</version>
+			<version>4.13.2</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>

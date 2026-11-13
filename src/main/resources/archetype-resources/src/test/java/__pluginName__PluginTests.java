@@ -1,3 +1,8 @@
+#if(!$pluginType || $pluginType.trim() == "")##
+#set($pluginType = "rest")##
+#end
+#set($pt = $pluginType.trim().toLowerCase())##
+#if($pt == "rest")##
 package ${package};
 
 import static org.codelibs.elasticsearch.runner.ElasticsearchClusterRunner.newConfigs;
@@ -12,38 +17,38 @@ import org.elasticsearch.node.Node;
 
 import junit.framework.TestCase;
 
+/** Integration test that boots a single ES 7.10.2 node with this plugin. */
 public class ${pluginName}PluginTests extends TestCase {
 
     private ElasticsearchClusterRunner runner;
 
     @Override
     protected void setUp() throws Exception {
-        // create runner instance
         runner = new ElasticsearchClusterRunner();
-        // create ES nodes
         runner.onBuild(new ElasticsearchClusterRunner.Builder() {
             @Override
             public void build(final int number, final Builder settingsBuilder) {
                 settingsBuilder.put("http.cors.enabled", true);
                 settingsBuilder.put("http.cors.allow-origin", "*");
-                settingsBuilder.putList("discovery.zen.ping.unicast.hosts",
-                        "localhost:9301-9310");
+                // 7.x no longer uses discovery.zen.ping.unicast.hosts.
+                // single-node discovery bootstraps the cluster without
+                // cluster.initial_master_nodes, which keeps this test fast.
+                settingsBuilder.put("discovery.type", "single-node");
             }
         }).build(newConfigs()
                 .clusterName("es-cl-run-" + System.currentTimeMillis())
                 .pluginTypes("${package}.${pluginName}Plugin")
-                .numOfNode(3));
+                .numOfNode(1));
 
-        // wait for yellow status
         runner.ensureYellow();
     }
 
     @Override
     protected void tearDown() throws Exception {
-        // close runner
-        runner.close();
-        // delete all files
-        runner.clean();
+        if (runner != null) {
+            runner.close();
+            runner.clean();
+        }
     }
 
     public void test_plugin() throws Exception {
@@ -55,7 +60,7 @@ public class ${pluginName}PluginTests extends TestCase {
             final String content = curlResponse.getContentAsString();
             assertNotNull(content);
             final Map<String, Object> contentMap = curlResponse
-                    .getContent(EcrCurl.jsonParser);
+                    .getContent(EcrCurl.jsonParser());
             assertEquals(index, contentMap.get("index"));
             assertTrue(contentMap.get("description").toString()
                     .startsWith("This is a ${artifactId} response:"));
@@ -66,10 +71,27 @@ public class ${pluginName}PluginTests extends TestCase {
             final String content = curlResponse.getContentAsString();
             assertNotNull(content);
             final Map<String, Object> contentMap = curlResponse
-                    .getContent(EcrCurl.jsonParser);
+                    .getContent(EcrCurl.jsonParser());
             assertFalse(contentMap.containsKey("index"));
             assertTrue(contentMap.get("description").toString()
                     .startsWith("This is a ${artifactId} response:"));
         }
     }
 }
+#else
+package ${package};
+
+import org.elasticsearch.plugins.Plugin;
+
+import junit.framework.TestCase;
+
+/** Smoke test for a pluginType=${pluginType} plugin; no cluster is started. */
+public class ${pluginName}PluginTests extends TestCase {
+
+    public void test_pluginIsLoadable() {
+        final ${pluginName}Plugin plugin = new ${pluginName}Plugin();
+        assertNotNull(plugin);
+        assertTrue(plugin instanceof Plugin);
+    }
+}
+#end
